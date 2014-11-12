@@ -69,6 +69,7 @@
 
 - (void)edit:(id)sender
 {
+    curretNote.content = textView.string;
     [[NSNotificationCenter defaultCenter]postNotificationName:DLAddNewNoteNotification object:nil];
     textView.string = @"";
 }

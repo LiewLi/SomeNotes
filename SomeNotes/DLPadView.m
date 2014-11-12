@@ -89,8 +89,8 @@
 - (BOOL)checkIfNeedDelete
 {
     if (notes.count) {
-        DLNoteCellView *cellView = [self.tableView viewAtColumn:0 row:0 makeIfNecessary:NO];
-        if ([cellView.titleLabel.stringValue isEqualToString: @"New Note"]) {
+        DLNote *note = notes[0];
+        if (!note.content || [note.content isEqualToString:@""]) {
             [self.tableView removeRowsAtIndexes:[NSIndexSet indexSetWithIndex:0] withAnimation:NSTableViewAnimationSlideUp];
             [notes removeObjectAtIndex:0];
              return YES;
