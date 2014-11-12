@@ -94,6 +94,7 @@
 
 - (void)textDidEndEditing:(NSNotification *)notification
 {
+    curretNote.content = textView.string;
     [[NSNotificationCenter defaultCenter] postNotificationName:DLExitingEditingModeNotification object:nil];
 }
 
