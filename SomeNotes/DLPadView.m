@@ -212,12 +212,22 @@
         for (int i = 0; i < notes.count; ++i) {
             if (i != self.tableView.selectedRow) {
                 DLNoteCellView *cellView = [self.tableView viewAtColumn:0 row:i makeIfNecessary:NO];
-                cellView.backgroundColor = [NSColor whiteColor];
+                 cellView.backgroundColor = [NSColor whiteColor];
+                if (self.tableView.selectedRow == i + 1) {
+                    cellView.isSelected = YES;
+                } else {
+                    cellView.isSelected = NO;
+                }
+               
+            }
+            else {
+                DLNoteCellView *cellView = [self.tableView viewAtColumn:0 row:self.tableView.selectedRow makeIfNecessary:NO];
+                cellView.isSelected = YES;
+                cellView.backgroundColor = active ? activeColor : inactiveColor;
             }
         }
         
-        DLNoteCellView *cellView = [self.tableView viewAtColumn:0 row:self.tableView.selectedRow makeIfNecessary:NO];
-        cellView.backgroundColor = active ? activeColor : inactiveColor;
+   
     }
 }
 @end

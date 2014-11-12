@@ -14,4 +14,5 @@ static NSString * CellIdentifier = @"DLNoteCellView";
 @interface DLNoteCellView : DLBackgroundView
 @property (nonatomic, weak)IBOutlet NSTextField *titleLabel;
 @property (nonatomic, weak)IBOutlet NSTextField *timeLabel;
+@property (nonatomic, assign) BOOL isSelected;
 @end
