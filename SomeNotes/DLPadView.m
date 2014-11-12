@@ -11,6 +11,7 @@
 #import "DLSingleNoteWindow.h"
 #import "DLNote.h"
 
+
 @interface DLPadView ()<NSTableViewDataSource, NSTableViewDelegate>
 {
     NSDictionary *titleAttr;
@@ -168,6 +169,8 @@
     
 }
 
+
+
 - (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)row
 {
     return 44;
@@ -193,6 +196,15 @@
     
 }
 
+
+- (BOOL)selectionShouldChangeInTableView:(NSTableView *)aTableView
+{
+    NSInteger selectedRowNumber = [aTableView selectedRow];
+    if (selectedRowNumber > 0) {
+        [aTableView setNeedsDisplayInRect:[aTableView rectOfRow:selectedRowNumber-1]];
+    }
+    return YES;
+}
 
 - (void)refreshTableView
 {
