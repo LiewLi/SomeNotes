@@ -107,13 +107,17 @@
 {
     if (active) {
         active = NO;
-        notes = [notesCopy mutableCopy]?:notes;
-        notesCopy = nil;
-        [self.tableView reloadData];
-        if (selectedNote) {
-            NSUInteger row = [notes indexOfObject:selectedNote];
-            [self.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:row] byExtendingSelection:NO];
+        if (notesCopy) {
+            notes = [notesCopy mutableCopy]?:notes;
+            notesCopy = nil;
+            [self.tableView reloadData];
+            if (selectedNote) {
+                NSUInteger row = [notes indexOfObject:selectedNote];
+                [self.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:row] byExtendingSelection:NO];
+            }
         }
+        else [self refreshTableView];
+       
     }
     else active = NO;
 }
