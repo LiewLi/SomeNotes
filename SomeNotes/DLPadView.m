@@ -21,6 +21,8 @@
     BOOL active;
     NSColor *activeColor;
     NSColor *inactiveColor;
+    NSMutableArray *notesCopy;
+    DLNote *selectedNote;
 }
 
 @end
@@ -39,11 +41,12 @@
    // dateFormatter.dateStyle = NSDateFormatterShortStyle;
     
     notes = [[NSMutableArray alloc]init]; //TODO: Load From FS
-   
+    
     active = YES; // active Mode
     
-    titleAttr = @{NSFontAttributeName:[NSFont boldSystemFontOfSize:13.0]};
-    timeAttr = @{NSForegroundColorAttributeName:[NSColor colorWithCalibratedRed:110.0/255 green:110.0/255 blue:110.0/255 alpha:1.0]};
+    titleAttr = @{NSFontAttributeName:[NSFont fontWithName:@"Helvetica Bold" size:13]};
+    timeAttr = @{NSForegroundColorAttributeName:[NSColor colorWithCalibratedRed:110.0/255 green:110.0/255 blue:110.0/255 alpha:1.0],
+                 NSFontAttributeName:[NSFont fontWithName:@"Helvetica Neue Light" size:12]};
     
     self.tableView.headerView = nil;
     self.tableView.focusRingType = NSFocusRingTypeNone;
@@ -55,6 +58,39 @@
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(becomeInactive:) name:DLEnteringEditingModeNotification object:nil];
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(becomeActive:) name:DLExitingEditingModeNotification object:nil];
     
+}
+
+
+#pragma mark - Search Functionality
+- (void)updateFilter:(id)sender
+{
+    if (notesCopy == nil) {
+        notesCopy = [notes mutableCopy];
+    }
+    NSString *searchString = self.searchField.stringValue;
+    if (!searchString || [searchString isEqualToString:@""]) {
+        notes = notesCopy;
+        notesCopy = nil;
+        [self.tableView reloadData];
+        [self refreshTableView];
+    }
+    else {
+        notes = [notesCopy mutableCopy];
+        [self.tableView reloadData];
+        
+        NSMutableIndexSet *indexes = [[NSMutableIndexSet alloc]init];
+        [self.tableView beginUpdates];
+        [notes enumerateObjectsUsingBlock:^(DLNote* obj, NSUInteger idx, BOOL *stop) {
+            if ([obj.title rangeOfString:searchString options:NSCaseInsensitiveSearch].location == NSNotFound) {
+                [indexes addIndex:idx];
+            }
+        }];
+        
+        [self.tableView removeRowsAtIndexes:indexes withAnimation:NSTableViewAnimationSlideUp];
+        [notes removeObjectsAtIndexes:indexes];
+        [self.tableView endUpdates];
+        [self refreshTableView];
+    }
 }
 
 - (void)becomeActive:(NSNotification *)notification
@@ -71,7 +107,13 @@
 {
     if (active) {
         active = NO;
-        [self refreshTableView];
+        notes = [notesCopy mutableCopy]?:notes;
+        notesCopy = nil;
+        [self.tableView reloadData];
+        if (selectedNote) {
+            NSUInteger row = [notes indexOfObject:selectedNote];
+            [self.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:row] byExtendingSelection:NO];
+        }
     }
     else active = NO;
 }
@@ -107,6 +149,7 @@
     note.createdDate = [NSDate date];
     note.modifiedDate = [NSDate date];
     [notes insertObject:note atIndex:0];
+    selectedNote = note;
     [self.tableView insertRowsAtIndexes:[NSIndexSet indexSetWithIndex:0] withAnimation:NSTableViewAnimationSlideDown];
     [self.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
     
@@ -165,6 +208,14 @@
     NSAttributedString *time = [[NSAttributedString alloc]initWithString:[dateFormatter stringFromDate:note.createdDate] attributes:timeAttr];
     cellView.titleLabel.attributedStringValue = title;
     cellView.timeLabel.attributedStringValue = time;
+    
+    if ([note isEqualTo:selectedNote]) {
+        cellView.backgroundColor = active ? activeColor : inactiveColor;
+    }
+    else {
+        cellView.backgroundColor = [NSColor whiteColor];
+    }
+    
     return cellView;
     
 }
@@ -176,11 +227,6 @@
     return 44;
 }
 
-- (BOOL)tableView:(NSTableView *)tableView shouldSelectRow:(NSInteger)row
-{
-    active = YES;
-    return YES;
-}
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification
 {
@@ -190,8 +236,9 @@
     }
   
     if (self.tableView.selectedRow >= 0) {
+        selectedNote = notes[self.tableView.selectedRow];
         [self refreshTableView];
-        [[NSNotificationCenter defaultCenter] postNotificationName:DLChangeCurrentNoteNotification object:notes[self.tableView.selectedRow]];
+        [[NSNotificationCenter defaultCenter] postNotificationName:DLChangeCurrentNoteNotification object:selectedNote];
     }
     
 }
@@ -208,10 +255,11 @@
 
 - (void)refreshTableView
 {
-    if (notes.count) {
+    NSInteger count = notes.count;
+    if (count) {
         for (int i = 0; i < notes.count; ++i) {
-            if (i != self.tableView.selectedRow) {
-                DLNoteCellView *cellView = [self.tableView viewAtColumn:0 row:i makeIfNecessary:NO];
+            DLNoteCellView *cellView = [self.tableView viewAtColumn:0 row:i makeIfNecessary:NO];
+            if (![notes[i] isEqualTo:selectedNote]) {
                  cellView.backgroundColor = [NSColor whiteColor];
                 if (self.tableView.selectedRow == i + 1) {
                     cellView.isSelected = YES;
@@ -221,9 +269,10 @@
                
             }
             else {
-                DLNoteCellView *cellView = [self.tableView viewAtColumn:0 row:self.tableView.selectedRow makeIfNecessary:NO];
-                cellView.isSelected = YES;
+              //  NSLog(@"%s %@ %ld", __PRETTY_FUNCTION__, ((DLNote *)notes[i]).title, (NSUInteger)active);
                 cellView.backgroundColor = active ? activeColor : inactiveColor;
+                cellView.isSelected = YES;
+               
             }
         }
         

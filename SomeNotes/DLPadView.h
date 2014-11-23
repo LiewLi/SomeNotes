@@ -13,4 +13,6 @@ static NSString *DLChangeCurrentNoteNotification = @"DLChangeCurrentNoteNotifica
 @interface DLPadView : NSViewController
 @property (nonatomic, weak)IBOutlet NSTableView *tableView;
 @property (nonatomic, weak)IBOutlet NSScrollView *scrollView;
+@property (nonatomic, weak)IBOutlet NSSearchField *searchField;
+- (IBAction)updateFilter:(id)sender;
 @end

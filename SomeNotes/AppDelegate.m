@@ -31,8 +31,8 @@
     self.window.titlebarAppearsTransparent = YES;
     self.window.styleMask = self.window.styleMask | NSFullSizeContentViewWindowMask;
     NSRect winFrame = self.window.frame;
-    winFrame.size.width = 600;
-    winFrame.size.height = 400;
+    winFrame.size.width = 700;
+    winFrame.size.height = 500;
     [self.window setFrame:winFrame display:NO];
     [self.window setMinSize:NSMakeSize(400, 400)];
     
