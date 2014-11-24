@@ -19,12 +19,12 @@
     } else if ([other class] != [DLNote class]){
         return NO;
     } else {
-        return _title == ((DLNote *)other).title;
+        return [_content isEqualToString:((DLNote *)other).content];
     }
 }
 
 - (NSUInteger)hash
 {
-    return [_title hash];
+    return [_content hash];
 }
 @end

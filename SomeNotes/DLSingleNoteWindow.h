@@ -18,6 +18,7 @@ static NSString *DLExitingEditingModeNotification = @"DLExitingEditingModeNotifi
 @interface DLSingleNoteWindow : NSViewController
 {
     IBOutlet NSTextView *textView;
+    IBOutlet NSButton *shareButton;
 }
 
 - (IBAction)share:(id)sender;

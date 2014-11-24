@@ -7,6 +7,7 @@
         <customObject id="-2" userLabel="File's Owner" customClass="DLSingleNoteWindow">
             <connections>
                 <outlet property="backgroundView" destination="Hz6-mo-xeY" id="Qed-pd-5u1"/>
+                <outlet property="shareButton" destination="d1q-A2-B95" id="0Ut-UV-FrA"/>
                 <outlet property="textView" destination="4o8-On-FFe" id="GX2-oN-fbK"/>
                 <outlet property="timeLabel" destination="JbX-qX-q73" id="eV2-tu-ZTf"/>
                 <outlet property="view" destination="Hz6-mo-xeY" id="0bl-1N-x8E"/>
@@ -43,7 +44,7 @@
                         <font key="font" metaFont="cellTitle"/>
                     </buttonCell>
                     <connections>
-                        <action selector="share:" target="-2" id="Bxc-r8-Nol"/>
+                        <action selector="share:" target="-2" id="ald-xo-Hrc"/>
                     </connections>
                 </button>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="JbX-qX-q73">

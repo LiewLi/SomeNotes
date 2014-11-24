@@ -10,7 +10,7 @@
 #import "DLPadView.h"
 #import "DLNote.h"
 
-@interface DLSingleNoteWindow () <NSTextViewDelegate>
+@interface DLSingleNoteWindow () <NSTextViewDelegate, NSSharingServicePickerDelegate>
 {
     NSDictionary *attr;
     NSDateFormatter *dateFormatter;
@@ -24,6 +24,9 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do view setup here.
+    
+    //configure share button
+    [shareButton sendActionOn:NSLeftMouseDownMask];
     
     
     NSMutableParagraphStyle *paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
@@ -77,7 +80,12 @@
 
 - (void)share:(id)sender
 {
-    NSLog(@"%s", __PRETTY_FUNCTION__);
+    if(curretNote && curretNote.content) {
+        NSArray *items = @[curretNote.content];
+        NSSharingServicePicker *picker = [[NSSharingServicePicker alloc]initWithItems:items];
+        picker.delegate = self;
+        [picker showRelativeToRect:[sender bounds] ofView:sender preferredEdge:NSMinYEdge];
+    }
 }
 
 
@@ -100,6 +108,7 @@
 
 - (void)textDidChange:(NSNotification *)notification
 {
+    curretNote.content = textView.string;
     NSString *title = nil;
     NSScanner *scanner = [NSScanner scannerWithString:textView.string];
     [scanner scanCharactersFromSet:[NSCharacterSet whitespaceAndNewlineCharacterSet] intoString:NULL];

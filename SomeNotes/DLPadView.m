@@ -72,7 +72,6 @@
         notes = notesCopy;
         notesCopy = nil;
         [self.tableView reloadData];
-        [self refreshTableView];
     }
     else {
         notes = [notesCopy mutableCopy];
