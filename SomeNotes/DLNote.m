@@ -19,7 +19,7 @@
     } else if ([other class] != [DLNote class]){
         return NO;
     } else {
-        return [_content isEqualToString:((DLNote *)other).content];
+        return [_content isEqualToAttributedString:((DLNote *)other).content];
     }
 }
 

@@ -9,7 +9,8 @@
 #import <Foundation/Foundation.h>
 
 @interface DLNote : NSObject
-@property (nonatomic, copy) NSString *content;
+//@property (nonatomic, copy) NSString *content;
+@property (nonatomic, copy) NSAttributedString *content;
 @property (nonatomic, strong)NSDate *createdDate;
 @property (nonatomic, strong)NSDate *modifiedDate;
 @property (nonatomic, copy) NSString *title;

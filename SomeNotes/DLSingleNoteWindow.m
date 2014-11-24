@@ -56,9 +56,13 @@
 - (void)changeCurrentNote:(NSNotification *)notification
 {
     if (curretNote) {
-        curretNote.content = textView.string;
+        curretNote.content = textView.attributedString;
         curretNote = notification.object;
-        textView.string = curretNote.content?:@"";
+        //set textview attributedstring
+        textView.string = @"";
+        if (curretNote.content) {
+            [textView.textStorage appendAttributedString:curretNote.content];
+        }
     }
     else {
         curretNote = notification.object;
@@ -72,7 +76,7 @@
 
 - (void)edit:(id)sender
 {
-    curretNote.content = textView.string;
+    curretNote.content = textView.attributedString;
     [[NSNotificationCenter defaultCenter]postNotificationName:DLAddNewNoteNotification object:nil];
     textView.string = @"";
 }
@@ -102,13 +106,19 @@
 
 - (void)textDidEndEditing:(NSNotification *)notification
 {
-    curretNote.content = textView.string;
+    curretNote.content = textView.attributedString;
     [[NSNotificationCenter defaultCenter] postNotificationName:DLExitingEditingModeNotification object:nil];
+}
+
+- (void)textDidBeginEditing:(NSNotification *)notification
+{
+    //change current note's modified date and resort tableview
+    [[NSNotificationCenter defaultCenter] postNotificationName:DLModifyNoteNotification object:curretNote];
 }
 
 - (void)textDidChange:(NSNotification *)notification
 {
-    curretNote.content = textView.string;
+    curretNote.content = textView.attributedString;
     NSString *title = nil;
     NSScanner *scanner = [NSScanner scannerWithString:textView.string];
     [scanner scanCharactersFromSet:[NSCharacterSet whitespaceAndNewlineCharacterSet] intoString:NULL];

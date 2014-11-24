@@ -14,6 +14,7 @@ static  NSString *DLNoteChangeTitleNotification = @"DLNoteChangeTitleNotificatio
 static  NSString *DLAddNewNoteNotification = @"DLAddNewNoteNotification";
 static NSString *DLEnteringEditingModeNotification = @"DLEnteringEditingModeNotification";
 static NSString *DLExitingEditingModeNotification = @"DLExitingEditingModeNotification";
+static NSString *DLModifyNoteNotification = @"DLModifyNoteNotification";
 
 @interface DLSingleNoteWindow : NSViewController
 {

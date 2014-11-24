@@ -16,7 +16,7 @@
 {
     NSDictionary *titleAttr;
     NSDictionary *timeAttr;
-    NSMutableArray *notes;
+    NSMutableArray *notes; // soted by modified date
     NSDateFormatter *dateFormatter;
     BOOL active;
     NSColor *activeColor;
@@ -57,6 +57,7 @@
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(addNote:) name:DLAddNewNoteNotification object:nil];
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(becomeInactive:) name:DLEnteringEditingModeNotification object:nil];
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(becomeActive:) name:DLExitingEditingModeNotification object:nil];
+    [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(updateModifiedNote:) name:DLModifyNoteNotification object:nil];
     
 }
 
@@ -90,6 +91,28 @@
         [self.tableView endUpdates];
         [self refreshTableView];
     }
+}
+
+- (void)updateModifiedNote:(NSNotification *)notification
+{
+    //resort tableview based on modified date
+    DLNote *note = notification.object;
+    NSUInteger index = [notes indexOfObject:note];
+    
+    DLNoteCellView *cellView = [self.tableView viewAtColumn:0 row:index makeIfNecessary:NO];
+    note.modifiedDate = [NSDate date];
+    NSAttributedString *date = [self dateForNote:note Since:[NSDate date]];
+    cellView.timeLabel.attributedStringValue = date;
+    
+    
+    [notes sortUsingComparator:^NSComparisonResult(DLNote* note1, DLNote* note2) {
+        return [note2.modifiedDate compare:note1.modifiedDate];
+    }];
+    
+    
+    [self.tableView beginUpdates];
+    [self.tableView moveRowAtIndex:index toIndex:0];
+    [self.tableView endUpdates];
 }
 
 - (void)becomeActive:(NSNotification *)notification
@@ -136,7 +159,7 @@
 {
     if (notes.count) {
         DLNote *note = notes[0];
-        if (!note.content || [note.content isEqualToString:@""]) {
+        if (!note.content || [note.content.string isEqualToString:@""]) {
             [self.tableView removeRowsAtIndexes:[NSIndexSet indexSetWithIndex:0] withAnimation:NSTableViewAnimationSlideUp];
             [notes removeObjectAtIndex:0];
              return YES;
@@ -184,6 +207,25 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
+
+- (NSAttributedString *) dateForNote:(DLNote *)note Since:(NSDate *)date
+{
+    NSTimeInterval timeLapse = [date timeIntervalSinceDate:note.modifiedDate];
+    if (timeLapse >= 86400) {
+        dateFormatter.timeStyle = NSDateFormatterNoStyle;
+        dateFormatter.dateStyle = NSDateFormatterShortStyle;
+    }
+    else {
+        dateFormatter.timeStyle = NSDateFormatterShortStyle;
+        dateFormatter.dateStyle = NSDateFormatterNoStyle;
+    }
+    
+    NSAttributedString *time = [[NSAttributedString alloc]initWithString:[dateFormatter stringFromDate:note.modifiedDate] attributes:timeAttr];
+    
+    return time;
+}
+
+
 #pragma mark - NSTableViewDataSource, NSTableViewDelegate
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView
@@ -198,17 +240,7 @@
     DLNoteCellView *cellView = [tableView makeViewWithIdentifier:CellIdentifier owner:self];
     NSAttributedString *title = [[NSAttributedString alloc]initWithString:note.title attributes:titleAttr];
     
-    NSTimeInterval timeLapse = [[NSDate date]  timeIntervalSinceDate:note.createdDate];
-    if (timeLapse >= 86400) {
-        dateFormatter.timeStyle = NSDateFormatterNoStyle;
-        dateFormatter.dateStyle = NSDateFormatterShortStyle;
-    }
-    else {
-        dateFormatter.timeStyle = NSDateFormatterShortStyle;
-        dateFormatter.dateStyle = NSDateFormatterNoStyle;
-    }
-    
-    NSAttributedString *time = [[NSAttributedString alloc]initWithString:[dateFormatter stringFromDate:note.createdDate] attributes:timeAttr];
+    NSAttributedString *time = [self dateForNote:note Since:[NSDate date]];
     cellView.titleLabel.attributedStringValue = title;
     cellView.timeLabel.attributedStringValue = time;
     
@@ -272,7 +304,6 @@
                
             }
             else {
-              //  NSLog(@"%s %@ %ld", __PRETTY_FUNCTION__, ((DLNote *)notes[i]).title, (NSUInteger)active);
                 cellView.backgroundColor = active ? activeColor : inactiveColor;
                 cellView.isSelected = YES;
                
