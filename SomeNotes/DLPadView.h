@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 static NSString *DLChangeCurrentNoteNotification = @"DLChangeCurrentNoteNotification ";
+static NSString *DLSingleNoteWindowRefresh = @"DLSingleNoteWindowRefresh ";
 
 @interface DLPadView : NSViewController
 @property (nonatomic, weak)IBOutlet NSTableView *tableView;

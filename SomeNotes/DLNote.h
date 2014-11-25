@@ -8,10 +8,10 @@
 
 #import <Foundation/Foundation.h>
 
-@interface DLNote : NSObject
+@interface DLNote : NSObject <NSCopying>
 //@property (nonatomic, copy) NSString *content;
 @property (nonatomic, copy) NSAttributedString *content;
-@property (nonatomic, strong)NSDate *createdDate;
 @property (nonatomic, strong)NSDate *modifiedDate;
 @property (nonatomic, copy) NSString *title;
+@property (nonatomic, copy)NSString *UUID;
 @end

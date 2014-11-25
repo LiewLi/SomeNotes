@@ -23,8 +23,32 @@
     }
 }
 
+- (instancetype)init
+{
+    if (self = [super init]) {
+//        _UUID = [[NSUUID UUID] UUIDString];
+        CFUUIDRef uuid = CFUUIDCreate(NULL);
+        _UUID = (__bridge NSString *)CFUUIDCreateString(NULL, uuid);
+    }
+    
+    return self;
+}
+
 - (NSUInteger)hash
 {
     return [_content hash];
+}
+
+- (id)copyWithZone:(NSZone *)zone
+{
+    id copy = [[[self class] alloc] init];
+    
+    if (copy) {
+        [copy setContent:[self.content copyWithZone:zone]];
+        [copy setTitle:[self.title copyWithZone:zone]];
+        [copy setModifiedDate:[self.modifiedDate copyWithZone:zone]];
+        [copy setUUID:[self.UUID copyWithZone:zone]];
+    }
+    return copy;
 }
 @end

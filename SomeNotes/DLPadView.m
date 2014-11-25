@@ -10,7 +10,8 @@
 #import "DLNoteCellView.h"
 #import "DLSingleNoteWindow.h"
 #import "DLNote.h"
-
+#import "DLNoteWindowController.h"
+#import "DLSingleNoteWindow.h"
 
 @interface DLPadView ()<NSTableViewDataSource, NSTableViewDelegate>
 {
@@ -23,6 +24,7 @@
     NSColor *inactiveColor;
     NSMutableArray *notesCopy;
     DLNote *selectedNote;
+    NSMutableDictionary *noteWindows;
 }
 
 @end
@@ -32,6 +34,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do view setup here
+    
+    noteWindows = [[NSMutableDictionary alloc] init];
     
     activeColor = [NSColor colorWithCalibratedRed:1.0 green:195.0/255 blue:10.0/225 alpha:1.0];
     inactiveColor = [NSColor colorWithCalibratedRed:1.0 green:232.0/255 blue:152.0/255 alpha:1.0];
@@ -52,12 +56,15 @@
     self.tableView.focusRingType = NSFocusRingTypeNone;
     [self.tableView setIntercellSpacing:NSMakeSize(0.0, 0.0)];
     self.scrollView.contentInsets = NSEdgeInsetsMake(0, 20, 0, 20);
+    [self.tableView setDoubleAction:@selector(openNote:)];
+    
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(noteTitleChange:)name:DLNoteChangeTitleNotification object:nil];
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(addNote:) name:DLAddNewNoteNotification object:nil];
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(becomeInactive:) name:DLEnteringEditingModeNotification object:nil];
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(becomeActive:) name:DLExitingEditingModeNotification object:nil];
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(updateModifiedNote:) name:DLModifyNoteNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(noteNeedRefresh:) name:DLNoteNeedsRefreshNotification object:nil];
     
 }
 
@@ -111,7 +118,9 @@
     
     
     [self.tableView beginUpdates];
-    [self.tableView moveRowAtIndex:index toIndex:0];
+    if(index != 0) {
+        [self.tableView moveRowAtIndex:index toIndex:0];
+    }
     [self.tableView endUpdates];
 }
 
@@ -144,6 +153,17 @@
     else active = NO;
 }
 
+- (void)noteNeedRefresh:(NSNotification *)notification
+{
+    DLNote *note = notification.object;
+    NSUInteger index = [notes indexOfObject:note];
+    if (index == self.tableView.selectedRow) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:DLSingleNoteWindowRefresh object:nil];
+    }
+    [self.tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:index] columnIndexes:[NSIndexSet indexSetWithIndex:0]];
+}
+
+
 - (void)addNote:(NSNotificationCenter *)notification
 {
     if (notes.count == 0) {
@@ -172,7 +192,6 @@
 {
     DLNote *note = [[DLNote alloc]init];
     note.title = @"New Note";
-    note.createdDate = [NSDate date];
     note.modifiedDate = [NSDate date];
     [notes insertObject:note atIndex:0];
     selectedNote = note;
@@ -227,7 +246,14 @@
 
 - (void)openNote:(id)sender
 {
-
+    DLNote* note =  notes[self.tableView.selectedRow];
+    DLNoteWindowController *wc = noteWindows[note.UUID];
+    if (!wc) {
+      wc = [[DLNoteWindowController alloc]initWithWindowNibName:@"DLNoteWindowController"];
+        noteWindows[note.UUID] = wc;
+    }
+    wc.note = note;
+    [wc showWindow:self];
 }
 
 - (void)deleteNote:(id)sender

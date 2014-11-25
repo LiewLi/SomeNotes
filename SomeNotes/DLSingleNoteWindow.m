@@ -15,7 +15,7 @@
 {
     NSDictionary *attr;
     NSDateFormatter *dateFormatter;
-    DLNote *curretNote;
+    DLNote *currentNote;
 }
 
 @end
@@ -32,12 +32,12 @@
     
     NSMutableParagraphStyle *paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
     [paragraphStyle setAlignment:NSCenterTextAlignment];
-    attr = @{NSFontAttributeName:[NSFont fontWithName:@"Helvetica" size:12],
+    attr = @{NSFontAttributeName:[NSFont fontWithName:@"Helvetica" size:11],
              NSForegroundColorAttributeName:[NSColor colorWithCalibratedRed:110.0/255 green:110.0/255 blue:110.0/255 alpha:1.0],
              NSParagraphStyleAttributeName:paragraphStyle};
     
     dateFormatter = [[NSDateFormatter alloc]init];
-    dateFormatter.timeStyle = NSDateFormatterMediumStyle;
+    dateFormatter.timeStyle = NSDateFormatterShortStyle;
     dateFormatter.dateStyle = NSDateFormatterMediumStyle;
     
     NSString *time = [dateFormatter stringFromDate:[NSDate date]];
@@ -52,22 +52,23 @@
     
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(changeCurrentNote:) name:DLChangeCurrentNoteNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(enterEditingMode:) name:DLEnteringEditingModeNotification object:nil];
+     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refresh:) name:DLSingleNoteWindowRefresh object:nil];
 
 }
 
 - (void)changeCurrentNote:(NSNotification *)notification
 {
-    if (curretNote) {
-        curretNote.content = textView.attributedString;
-        curretNote = notification.object;
+    if (currentNote) {
+        currentNote.content = textView.attributedString;
+        currentNote = notification.object;
         //set textview attributedstring
         textView.string = @"";
-        if (curretNote.content) {
-            [textView.textStorage appendAttributedString:curretNote.content];
+        if (currentNote.content) {
+            [textView.textStorage appendAttributedString:currentNote.content];
         }
     }
     else {
-        curretNote = notification.object;
+        currentNote = notification.object;
         textView.string = @"";
     }
 }
@@ -79,7 +80,7 @@
 
 - (void)edit:(id)sender
 {
-    curretNote.content = textView.attributedString;
+    currentNote.content = textView.attributedString;
     [[NSNotificationCenter defaultCenter]postNotificationName:DLAddNewNoteNotification object:nil];
     textView.string = @"";
 }
@@ -87,8 +88,8 @@
 
 - (void)share:(id)sender
 {
-    if(curretNote && curretNote.content) {
-        NSArray *items = @[curretNote.content];
+    if(currentNote && currentNote.content) {
+        NSArray *items = @[currentNote.content];
         NSSharingServicePicker *picker = [[NSSharingServicePicker alloc]initWithItems:items];
         picker.delegate = self;
         [picker showRelativeToRect:[sender bounds] ofView:sender preferredEdge:NSMinYEdge];
@@ -98,8 +99,19 @@
 
 - (void)enterEditingMode:(NSNotification *)notification
 {
-    if (!curretNote) {
+    if (!currentNote) {
         [[NSNotificationCenter defaultCenter] postNotificationName:DLNoteChangeTitleNotification object:[NSNull null]];
+    }
+}
+
+- (void)refresh:(NSNotification *)notification
+{
+    if (currentNote) {
+        NSString *time = [dateFormatter stringFromDate:currentNote.modifiedDate];
+        self.timeLabel.attributedStringValue = [[NSAttributedString alloc] initWithString:time attributes:attr];
+        textView.string = @"";
+        [textView.textStorage appendAttributedString:currentNote.content];
+        
     }
 }
 
@@ -108,24 +120,30 @@
 
 - (void)textDidEndEditing:(NSNotification *)notification
 {
-    curretNote.content = textView.attributedString;
+    currentNote.content = textView.attributedString;
     [[NSNotificationCenter defaultCenter] postNotificationName:DLExitingEditingModeNotification object:nil];
 }
 
 - (void)textDidBeginEditing:(NSNotification *)notification
 {
     //change current note's modified date and resort tableview
-    [[NSNotificationCenter defaultCenter] postNotificationName:DLModifyNoteNotification object:curretNote];
+    [[NSNotificationCenter defaultCenter] postNotificationName:DLModifyNoteNotification object:currentNote];
 }
 
 - (void)textDidChange:(NSNotification *)notification
 {
-    curretNote.content = textView.attributedString;
+    currentNote.content = textView.attributedString;
+    
+    currentNote.modifiedDate = [NSDate date];
+    NSString *time = [dateFormatter stringFromDate:currentNote.modifiedDate];
+    
+    self.timeLabel.attributedStringValue = [[NSAttributedString alloc] initWithString:time attributes:attr];
     NSString *title = nil;
     NSScanner *scanner = [NSScanner scannerWithString:textView.string];
     [scanner scanCharactersFromSet:[NSCharacterSet whitespaceAndNewlineCharacterSet] intoString:NULL];
     [scanner scanUpToString:@"\n" intoString:&title];
     [title stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    
     [[NSNotificationCenter defaultCenter] postNotificationName:DLNoteChangeTitleNotification object:title?[title copy]:[NSNull null]];
 }
 
