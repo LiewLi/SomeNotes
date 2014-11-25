@@ -225,6 +225,55 @@
     return time;
 }
 
+- (void)openNote:(id)sender
+{
+
+}
+
+- (void)deleteNote:(id)sender
+{
+    NSUInteger row = self.tableView.selectedRow;
+    
+    [self.tableView beginUpdates];
+    [self.tableView removeRowsAtIndexes:[NSIndexSet indexSetWithIndex:row] withAnimation:NSTableViewAnimationSlideUp];
+    [notes removeObjectAtIndex:row];
+    
+    if (notes.count) { // note at row already deleted
+        NSUInteger next;
+        if (row == notes.count) {
+            next = row - 1;
+        }
+        else{
+            next = row;
+        }
+        
+        [self.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:next] byExtendingSelection:NO];
+    }
+    else {
+        [[NSNotificationCenter defaultCenter] postNotificationName:DLChangeCurrentNoteNotification object:nil];
+    }
+    
+    [self.tableView endUpdates];
+   
+}
+
+-(void)newNote:(id)sender
+{
+    [self addNewNote];
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem
+{
+    if (menuItem.action == @selector(newNote:)) {
+        if (notes.count) {
+            DLNote *note = notes[0];
+            return note.content != nil && ![note.content.string isEqualToString:@""];
+        }
+    }
+    
+    return YES;
+}
+
 
 #pragma mark - NSTableViewDataSource, NSTableViewDelegate
 

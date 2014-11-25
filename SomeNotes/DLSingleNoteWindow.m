@@ -9,6 +9,7 @@
 #import "DLSingleNoteWindow.h"
 #import "DLPadView.h"
 #import "DLNote.h"
+#import "DLTextView.h"
 
 @interface DLSingleNoteWindow () <NSTextViewDelegate, NSSharingServicePickerDelegate>
 {
@@ -50,6 +51,7 @@
     self.backgroundView.backgroundColor = [NSColor windowBackgroundColor];
     
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(changeCurrentNote:) name:DLChangeCurrentNoteNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(enterEditingMode:) name:DLEnteringEditingModeNotification object:nil];
 
 }
 
@@ -66,6 +68,7 @@
     }
     else {
         curretNote = notification.object;
+        textView.string = @"";
     }
 }
 
@@ -93,15 +96,14 @@
 }
 
 
-#pragma mark - NSTextViewDelegate
-
--(void)textViewDidChangeSelection:(NSNotification *)notification
+- (void)enterEditingMode:(NSNotification *)notification
 {
     if (!curretNote) {
         [[NSNotificationCenter defaultCenter] postNotificationName:DLNoteChangeTitleNotification object:[NSNull null]];
-         [[NSNotificationCenter defaultCenter] postNotificationName:DLEnteringEditingModeNotification object:nil];
     }
 }
+
+#pragma mark - NSTextViewDelegate
 
 
 - (void)textDidEndEditing:(NSNotification *)notification
