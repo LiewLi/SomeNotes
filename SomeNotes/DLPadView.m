@@ -233,27 +233,38 @@
 - (void)deleteNote:(id)sender
 {
     NSUInteger row = self.tableView.selectedRow;
+    NSString *title = ((DLNote *)notes[row]).title;
+    NSAlert *alert = [[NSAlert alloc]init];
+    alert.messageText = [NSString stringWithFormat:@"Are you sure you want to delete the note \"%@\"?", title];
+    [alert addButtonWithTitle:@"Delete Note"];
+    [alert addButtonWithTitle:@"Cancel"];
     
-    [self.tableView beginUpdates];
-    [self.tableView removeRowsAtIndexes:[NSIndexSet indexSetWithIndex:row] withAnimation:NSTableViewAnimationSlideUp];
-    [notes removeObjectAtIndex:row];
-    
-    if (notes.count) { // note at row already deleted
-        NSUInteger next;
-        if (row == notes.count) {
-            next = row - 1;
+    [alert beginSheetModalForWindow:self.tableView.window completionHandler:^(NSModalResponse returnCode) {
+        if (returnCode == NSAlertFirstButtonReturn) {
+           
+            if (notes.count > 1) {
+                NSUInteger next;
+                if (row == notes.count - 1) {
+                    next = row - 1;
+                }
+                else{
+                    next = row + 1;
+                }
+                [self.tableView beginUpdates];
+                [self.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:next] byExtendingSelection:NO];
+                [self.tableView removeRowsAtIndexes:[NSIndexSet indexSetWithIndex:row] withAnimation:NSTableViewAnimationSlideUp];
+                [notes removeObjectAtIndex:row];
+                [self.tableView endUpdates];
+            }
+            else {
+                [self.tableView removeRowsAtIndexes:[NSIndexSet indexSetWithIndex:row] withAnimation:NSTableViewAnimationSlideUp];
+                [notes removeObjectAtIndex:row];
+                [[NSNotificationCenter defaultCenter] postNotificationName:DLChangeCurrentNoteNotification object:nil];
+            }
+            
         }
-        else{
-            next = row;
-        }
-        
-        [self.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:next] byExtendingSelection:NO];
-    }
-    else {
-        [[NSNotificationCenter defaultCenter] postNotificationName:DLChangeCurrentNoteNotification object:nil];
-    }
+    }];
     
-    [self.tableView endUpdates];
    
 }
 
