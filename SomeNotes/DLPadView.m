@@ -25,6 +25,7 @@
     NSMutableArray *notesCopy;
     DLNote *selectedNote;
     NSMutableDictionary *noteWindows;
+    BOOL deactiveMode;
 }
 
 @end
@@ -65,6 +66,7 @@
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(becomeActive:) name:DLExitingEditingModeNotification object:nil];
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(updateModifiedNote:) name:DLModifyNoteNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(noteNeedRefresh:) name:DLNoteNeedsRefreshNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(mainWindow:) name:NSWindowDidBecomeMainNotification object:nil];
     
 }
 
@@ -152,6 +154,19 @@
     }
     else active = NO;
 }
+
+- (void)mainWindow:(NSNotification *)notification
+{
+    if (self.tableView.window != notification.object) {
+        deactiveMode = YES;
+    }
+    else {
+        deactiveMode = NO;
+    }
+    
+    [self refreshTableView];
+}
+
 
 - (void)noteNeedRefresh:(NSNotification *)notification
 {
@@ -331,7 +346,7 @@
     cellView.timeLabel.attributedStringValue = time;
     
     if ([note isEqualTo:selectedNote]) {
-        cellView.backgroundColor = active ? activeColor : inactiveColor;
+        cellView.backgroundColor = deactiveMode? [NSColor gridColor] :( active ? activeColor : inactiveColor);
     }
     else {
         cellView.backgroundColor = [NSColor whiteColor];
@@ -390,7 +405,7 @@
                
             }
             else {
-                cellView.backgroundColor = active ? activeColor : inactiveColor;
+                cellView.backgroundColor = deactiveMode? [NSColor gridColor] :( active ? activeColor : inactiveColor);
                 cellView.isSelected = YES;
                
             }

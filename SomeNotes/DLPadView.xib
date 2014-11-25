@@ -83,7 +83,6 @@
                                 <connections>
                                     <outlet property="dataSource" destination="-2" id="D9G-fR-cpp"/>
                                     <outlet property="delegate" destination="-2" id="S6X-sY-KZk"/>
-                                    <outlet property="menu" destination="ulb-0Z-y2z" id="93r-lg-zG0"/>
                                 </connections>
                             </tableView>
                         </subviews>
@@ -125,20 +124,5 @@
             </constraints>
             <point key="canvasLocation" x="248" y="319"/>
         </customView>
-        <menu id="ulb-0Z-y2z">
-            <items>
-                <menuItem title="Open" id="rOf-uN-mmZ">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                </menuItem>
-                <menuItem title="Delete" id="PeK-lF-Ffe">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                </menuItem>
-                <menuItem isSeparatorItem="YES" id="q9F-g2-6RC"/>
-                <menuItem title="New Note" id="Fa2-zk-cAh">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                </menuItem>
-            </items>
-            <point key="canvasLocation" x="158.5" y="695.5"/>
-        </menu>
     </objects>
 </document>
