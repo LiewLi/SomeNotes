@@ -9,7 +9,6 @@
 #import "DLPadView.h"
 #import "DLNoteCellView.h"
 #import "DLSingleNoteWindow.h"
-#import "DLNote.h"
 #import "DLNoteWindowController.h"
 #import "DLSingleNoteWindow.h"
 #import "AppDelegate.h"
@@ -19,13 +18,13 @@
 {
     NSDictionary *titleAttr;
     NSDictionary *timeAttr;
-    NSMutableArray *notes; // soted by modified date
+    NSArray *notes; // soted by modified date
     NSDateFormatter *dateFormatter;
     BOOL active;
     NSColor *activeColor;
     NSColor *inactiveColor;
     NSMutableArray *notesCopy;
-    DLNote *selectedNote;
+    Note *selectedNote;
     NSMutableDictionary *noteWindows;
     BOOL deactiveMode;
     NSManagedObjectContext *moc;
@@ -35,12 +34,59 @@
 
 @implementation DLPadView
 
+
+- (void)initializeCoreDataStack
+{
+    NSURL *modelURL = [[NSBundle mainBundle] URLForResource:@"Note" withExtension:@"momd"];
+    NSAssert(modelURL, @"Failed to find model url.");
+    NSManagedObjectModel *mom = [[NSManagedObjectModel alloc]initWithContentsOfURL:modelURL];
+    NSAssert(mom, @"Failed to initialize model");
+    
+    NSPersistentStoreCoordinator *psc = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:mom];
+    NSAssert(psc, @"Failed to create persistent store coordinator");
+    
+    moc = [[NSManagedObjectContext alloc]initWithConcurrencyType:NSMainQueueConcurrencyType];
+    [moc setPersistentStoreCoordinator:psc];
+    
+   // dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+   // dispatch_async(queue, ^{
+        // add perisistent store
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        NSURL *storeURL = [[fileManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
+        storeURL = [storeURL URLByAppendingPathComponent:@"SomeNotes.sqlite"];
+        
+        __autoreleasing NSError *error;
+        
+        [psc addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:nil error:&error];
+        
+        if (error) {
+            NSLog(@"Error adding persistent store to coordinator %@\n%@", [error localizedDescription], [error userInfo]);
+        }
+        
+       // dispatch_async(dispatch_get_main_queue(), ^{
+    
+        //    [self.tableView reloadData];
+    
+  
+       // });
+        
+    //});
+    
+}
+
+- (void)viewWillDisappear
+{
+    __autoreleasing NSError *error;
+    if (![moc save:&error]) {
+        NSLog(@"Save notes to persistent store failed : %@", [error localizedDescription]);
+    }
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do view setup here
     
-    moc = ((AppDelegate *)[NSApp delegate]).moc;
-    
+    [self initializeCoreDataStack];
     
     noteWindows = [[NSMutableDictionary alloc] init];
     
@@ -51,7 +97,7 @@
    // dateFormatter.timeStyle = NSDateFormatterShortStyle;
    // dateFormatter.dateStyle = NSDateFormatterShortStyle;
     
-    //notes = [[NSMutableArray alloc]init]; //TODO: Load From FS
+    notes = [self fetchNotesWithPredicate:nil];
     
     active = YES; // active Mode
     
@@ -75,62 +121,101 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(mainWindow:) name:NSWindowDidBecomeMainNotification object:nil];
     
     
-    
+    if (notes.count > 0) {
+        [self.tableView reloadData];
+        [self.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
+    }
     
 }
 
 
-- (void)fetchNotesFromStore
+- (NSArray *)fetchNotesWithPredicate:(NSPredicate *)predicate
 {
     NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
     NSEntityDescription *entityDesc = [NSEntityDescription entityForName:@"Note" inManagedObjectContext:moc];
     [fetchRequest setEntity:entityDesc];
-
+    
+    // sort by modified date
+    NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc]initWithKey:@"modifiedDate" ascending:NO];
+    
+    [fetchRequest setSortDescriptors:@[sortDescriptor]];
+    
+    if (predicate) {
+        [fetchRequest setPredicate:predicate];
+    }
+    
     __autoreleasing NSError *error;
     
-    notes = [[moc executeFetchRequest:fetchRequest error:&error] mutableCopy];
-    
-    if (notes == nil) {
-        //TODO handle nil
-    }
+    NSArray * fetchedNotes = [[moc executeFetchRequest:fetchRequest error:&error] mutableCopy];
+   
+    return fetchedNotes;
+}
+
+
+- (Note *)addNewNoteToStore
+{
+    Note *note = [NSEntityDescription insertNewObjectForEntityForName:@"Note" inManagedObjectContext:moc];
+    note.modifiedDate = [NSDate date];
+    note.title = @"New Note";
+    CFUUIDRef uuid = CFUUIDCreate(NULL);
+    note.uuid = (__bridge NSString *) CFUUIDCreateString(NULL, uuid);
+    notes = [self fetchNotesWithPredicate:nil];
+    return note;
+}
+
+- (void)deleteNoteFromStore:(Note *)note
+{
+    [moc deleteObject:note];
+    [[NSNotificationCenter defaultCenter] postNotificationName:DLNoteRemovedFromContext object:note];
+    [noteWindows removeObjectForKey:note.uuid]; // in case window is open
+    notes = [self fetchNotesWithPredicate:nil];
 }
 
 
 #pragma mark - Search Functionality
 - (void)updateFilter:(id)sender
 {
-    if (notesCopy == nil) {
-        notesCopy = [notes mutableCopy];
-    }
+//    if (notesCopy == nil) {
+//        notesCopy = [notes mutableCopy];
+//    }
+//    NSString *searchString = self.searchField.stringValue;
+//    if (!searchString || [searchString isEqualToString:@""]) {
+//        notes = notesCopy;
+//        notesCopy = nil;
+//        [self.tableView reloadData];
+//    }
+//    else {
+//        notes = [notesCopy mutableCopy];
+//        [self.tableView reloadData];
+//        
+//        NSMutableIndexSet *indexes = [[NSMutableIndexSet alloc]init];
+//        [self.tableView beginUpdates];
+//        [notes enumerateObjectsUsingBlock:^(DLNote* obj, NSUInteger idx, BOOL *stop) {
+//            if ([obj.title rangeOfString:searchString options:NSCaseInsensitiveSearch].location == NSNotFound) {
+//                [indexes addIndex:idx];
+//            }
+//        }];
+//        
+//        [self.tableView removeRowsAtIndexes:indexes withAnimation:NSTableViewAnimationSlideUp];
+//        [notes removeObjectsAtIndexes:indexes];
+//        [self.tableView endUpdates];
+//        [self refreshTableView];
+//    }
+    
     NSString *searchString = self.searchField.stringValue;
-    if (!searchString || [searchString isEqualToString:@""]) {
-        notes = notesCopy;
-        notesCopy = nil;
-        [self.tableView reloadData];
+    if (searchString && ![searchString isEqualToString:@""]) {
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"(title CONTAINS[c] %@)", searchString];
+        notes = [self fetchNotesWithPredicate:predicate];
     }
-    else {
-        notes = [notesCopy mutableCopy];
-        [self.tableView reloadData];
-        
-        NSMutableIndexSet *indexes = [[NSMutableIndexSet alloc]init];
-        [self.tableView beginUpdates];
-        [notes enumerateObjectsUsingBlock:^(DLNote* obj, NSUInteger idx, BOOL *stop) {
-            if ([obj.title rangeOfString:searchString options:NSCaseInsensitiveSearch].location == NSNotFound) {
-                [indexes addIndex:idx];
-            }
-        }];
-        
-        [self.tableView removeRowsAtIndexes:indexes withAnimation:NSTableViewAnimationSlideUp];
-        [notes removeObjectsAtIndexes:indexes];
-        [self.tableView endUpdates];
-        [self refreshTableView];
-    }
+    else
+        notes = [self fetchNotesWithPredicate:nil];
+   [self.tableView reloadData];
 }
 
 - (void)updateModifiedNote:(NSNotification *)notification
 {
     //resort tableview based on modified date
-    DLNote *note = notification.object;
+    Note *note = notification.object;
     NSUInteger index = [notes indexOfObject:note];
     if (index != NSNotFound) {
         DLNoteCellView *cellView = [self.tableView viewAtColumn:0 row:index makeIfNecessary:NO];
@@ -138,11 +223,12 @@
         NSAttributedString *date = [self dateForNote:note Since:[NSDate date]];
         cellView.timeLabel.attributedStringValue = date;
         
+//        
+//        [notes sortUsingComparator:^NSComparisonResult(Note* note1, Note* note2) {
+//            return [note2.modifiedDate compare:note1.modifiedDate];
+//        }];
         
-        [notes sortUsingComparator:^NSComparisonResult(DLNote* note1, DLNote* note2) {
-            return [note2.modifiedDate compare:note1.modifiedDate];
-        }];
-        
+        notes = [self fetchNotesWithPredicate:nil];
         
         [self.tableView beginUpdates];
         if(index != 0) {
@@ -168,15 +254,16 @@
 {
     if (active) {
         active = NO;
-        if (notesCopy) {
-            notes = [notesCopy mutableCopy]?:notes;
-            notesCopy = nil;
+        //if (notesCopy) {
+           // notes = [notesCopy mutableCopy]?:notes;
+           // notesCopy = nil;
+        notes = [self fetchNotesWithPredicate:nil];
             [self.tableView reloadData];
             if (selectedNote) {
                 NSUInteger row = [notes indexOfObject:selectedNote];
                 [self.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:row] byExtendingSelection:NO];
             }
-        }
+      //  }
         else [self refreshTableView];
        
     }
@@ -198,7 +285,7 @@
 
 - (void)noteNeedRefresh:(NSNotification *)notification
 {
-    DLNote *note = notification.object;
+    Note *note = notification.object;
     NSUInteger index = [notes indexOfObject:note];
     if (index != NSNotFound) {
         if (index == self.tableView.selectedRow) {
@@ -224,10 +311,29 @@
 - (BOOL)checkIfNeedDelete
 {
     if (notes.count) {
-        DLNote *note = notes[0];
+        Note *note = notes[0];
         if (!note.content || [note.content.string isEqualToString:@""]) {
-            [self.tableView removeRowsAtIndexes:[NSIndexSet indexSetWithIndex:0] withAnimation:NSTableViewAnimationSlideUp];
-            [notes removeObjectAtIndex:0];
+//            [self.tableView removeRowsAtIndexes:[NSIndexSet indexSetWithIndex:0] withAnimation:NSTableViewAnimationSlideUp];
+//           // [notes removeObjectAtIndex:0];
+//            [self deleteNoteFromStore:notes[0]];
+            
+            if (notes.count > 1) {
+                [self.tableView beginUpdates];
+                [self.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:1] byExtendingSelection:NO];
+                [self.tableView removeRowsAtIndexes:[NSIndexSet indexSetWithIndex:0] withAnimation:NSTableViewAnimationSlideUp];
+                //[notes removeObjectAtIndex:row];
+                [self deleteNoteFromStore:notes[0]];
+                [self.tableView endUpdates];
+            }
+            else {
+                [self.tableView removeRowsAtIndexes:[NSIndexSet indexSetWithIndex:0] withAnimation:NSTableViewAnimationSlideUp];
+                // [notes removeObjectAtIndex:row];
+                [self deleteNoteFromStore:notes[0]];
+                [[NSNotificationCenter defaultCenter] postNotificationName:DLChangeCurrentNoteNotification object:nil];
+                 selectedNote = nil;
+            }
+
+            
              return YES;
         }
     }
@@ -236,10 +342,11 @@
 
 - (void)addNewNote
 {
-    DLNote *note = [[DLNote alloc]init];
-    note.title = @"New Note";
-    note.modifiedDate = [NSDate date];
-    [notes insertObject:note atIndex:0];
+   // DLNote *note = [[DLNote alloc]init];
+   // note.title = @"New Note";
+   // note.modifiedDate = [NSDate date];
+    //[notes insertObject:note atIndex:0];
+   Note *note =  [self addNewNoteToStore];
     selectedNote = note;
     [self.tableView insertRowsAtIndexes:[NSIndexSet indexSetWithIndex:0] withAnimation:NSTableViewAnimationSlideDown];
     [self.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
@@ -261,7 +368,7 @@
     }
     else {
         DLNoteCellView *cellView = [self.tableView viewAtColumn:0 row:self.tableView.selectedRow makeIfNecessary:NO];
-        DLNote *note = notes[self.tableView.selectedRow];
+        Note *note = notes[self.tableView.selectedRow];
         note.title = title;
         cellView.titleLabel.attributedStringValue = [[NSAttributedString alloc] initWithString:title attributes:titleAttr];
     }
@@ -273,7 +380,7 @@
 }
 
 
-- (NSAttributedString *) dateForNote:(DLNote *)note Since:(NSDate *)date
+- (NSAttributedString *) dateForNote:(Note *)note Since:(NSDate *)date
 {
     NSTimeInterval timeLapse = [date timeIntervalSinceDate:note.modifiedDate];
     if (timeLapse >= 86400) {
@@ -292,11 +399,11 @@
 
 - (void)openNote:(id)sender
 {
-    DLNote* note =  notes[self.tableView.selectedRow];
-    DLNoteWindowController *wc = noteWindows[note.UUID];
+    Note* note =  notes[self.tableView.selectedRow];
+    DLNoteWindowController *wc = noteWindows[note.uuid];
     if (!wc) {
       wc = [[DLNoteWindowController alloc]initWithWindowNibName:@"DLNoteWindowController"];
-        noteWindows[note.UUID] = wc;
+        noteWindows[note.uuid] = wc;
     }
     wc.note = note;
     [wc showWindow:self];
@@ -305,7 +412,7 @@
 - (void)deleteNote:(id)sender
 {
     NSUInteger row = self.tableView.selectedRow;
-    NSString *title = ((DLNote *)notes[row]).title;
+    NSString *title = ((Note *)notes[row]).title;
     NSAlert *alert = [[NSAlert alloc]init];
     alert.messageText = [NSString stringWithFormat:@"Are you sure you want to delete the note \"%@\"?", title];
     [alert addButtonWithTitle:@"Delete Note"];
@@ -325,13 +432,14 @@
                 [self.tableView beginUpdates];
                 [self.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:next] byExtendingSelection:NO];
                 [self.tableView removeRowsAtIndexes:[NSIndexSet indexSetWithIndex:row] withAnimation:NSTableViewAnimationSlideUp];
-                [notes removeObjectAtIndex:row];
+                [self deleteNoteFromStore:notes[row]];
                 [self.tableView endUpdates];
             }
             else {
                 [self.tableView removeRowsAtIndexes:[NSIndexSet indexSetWithIndex:row] withAnimation:NSTableViewAnimationSlideUp];
-                [notes removeObjectAtIndex:row];
+                [self deleteNoteFromStore:notes[row]];
                 [[NSNotificationCenter defaultCenter] postNotificationName:DLChangeCurrentNoteNotification object:nil];
+                selectedNote = nil;
             }
             
         }
@@ -349,7 +457,7 @@
 {
     if (menuItem.action == @selector(newNote:)) {
         if (notes.count) {
-            DLNote *note = notes[0];
+            Note *note = notes[0];
             return note.content != nil && ![note.content.string isEqualToString:@""];
         }
     }
@@ -368,7 +476,7 @@
 
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row
 {
-    DLNote *note = notes[row];
+    Note *note = notes[row];
     DLNoteCellView *cellView = [tableView makeViewWithIdentifier:CellIdentifier owner:self];
     NSAttributedString *title = [[NSAttributedString alloc]initWithString:note.title attributes:titleAttr];
     
@@ -397,7 +505,6 @@
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification
 {
-    
     if (self.tableView.selectedRow > 0) {
       [self checkIfNeedDelete];
     }

@@ -10,6 +10,6 @@
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 @property (weak) IBOutlet NSSplitView *splitView;
-@property (nonatomic, strong)NSManagedObjectContext *moc;
+
 @end
 

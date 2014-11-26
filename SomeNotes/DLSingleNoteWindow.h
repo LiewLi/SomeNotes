@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "DLBackgroundView.h"
-#import "DLNote.h"
+#import "Note.h"
 
 static  NSString *DLNoteChangeTitleNotification = @"DLNoteChangeTitleNotification";
 static  NSString *DLAddNewNoteNotification = @"DLAddNewNoteNotification";

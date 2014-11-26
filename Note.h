@@ -12,9 +12,9 @@
 
 @interface Note : NSManagedObject
 
-@property (nonatomic, retain) NSData * content;
-@property (nonatomic, retain) NSDate * modifiedDate;
-@property (nonatomic, retain) NSString * uuid;
-@property (nonatomic, retain) NSString * title;
+@property (nonatomic, copy) NSAttributedString  *content;
+@property (nonatomic, copy) NSDate * modifiedDate;
+@property (nonatomic, copy) NSString * uuid;
+@property (nonatomic, copy) NSString * title;
 
 @end

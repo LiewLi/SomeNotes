@@ -8,19 +8,20 @@
 
 #import "DLSingleNoteWindow.h"
 #import "DLPadView.h"
-#import "DLNote.h"
+//#import "DLNote.h"
 #import "DLTextView.h"
 
 @interface DLSingleNoteWindow () <NSTextViewDelegate, NSSharingServicePickerDelegate>
 {
     NSDictionary *attr;
     NSDateFormatter *dateFormatter;
-    DLNote *currentNote;
+    Note *currentNote;
 }
 
 @end
 
 @implementation DLSingleNoteWindow
+
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -53,23 +54,27 @@
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(changeCurrentNote:) name:DLChangeCurrentNoteNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(enterEditingMode:) name:DLEnteringEditingModeNotification object:nil];
      [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refresh:) name:DLSingleNoteWindowRefresh object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(noteRemovedFromContext:) name:DLNoteRemovedFromContext object:nil];
 
+}
+
+- (void)noteRemovedFromContext:(NSNotification *)notification
+{
+    if (currentNote == notification.object) {
+        currentNote = nil;
+    }
 }
 
 - (void)changeCurrentNote:(NSNotification *)notification
 {
+    NSLog(@"%s", __PRETTY_FUNCTION__);
     if (currentNote) {
         currentNote.content = textView.attributedString;
-        currentNote = notification.object;
-        //set textview attributedstring
-        textView.string = @"";
-        if (currentNote.content) {
-            [textView.textStorage appendAttributedString:currentNote.content];
-        }
     }
-    else {
-        currentNote = notification.object;
-        textView.string = @"";
+    currentNote = notification.object;
+    textView.string = @"";
+    if (currentNote.content) {
+        [textView.textStorage appendAttributedString:currentNote.content];
     }
 }
 
@@ -114,6 +119,7 @@
         
     }
 }
+
 
 #pragma mark - NSTextViewDelegate
 

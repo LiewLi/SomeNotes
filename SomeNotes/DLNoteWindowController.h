@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import "DLNote.h"
 #import "DLSingleNoteWindow.h"
+#import "Note.h"
 
 static NSString *DLNoteNeedsRefreshNotification = @"DLNoteNeedRefreshNotification";
 
@@ -19,6 +20,6 @@ static NSString *DLNoteNeedsRefreshNotification = @"DLNoteNeedRefreshNotificatio
     IBOutlet NSTextView *textView;
 }
 
-@property (nonatomic, strong)DLNote *note;
+@property (nonatomic, strong)Note *note;
 
 @end
