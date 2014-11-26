@@ -15,6 +15,7 @@
 @property (weak) IBOutlet NSWindow *window;
 @property (nonatomic, strong)DLPadView *padView;
 @property (nonatomic, strong)DLSingleNoteWindow *singleNoteView;
+
 @end
 
 @implementation AppDelegate
@@ -46,6 +47,40 @@
     [self.splitView addSubview:_singleNoteView.view];
     
     [self.splitView adjustSubviews];
+    
+    [self initializeCoreDataStack];
+    
+}
+
+- (void)initializeCoreDataStack
+{
+    NSURL *modelURL = [[NSBundle mainBundle] URLForResource:@"Note" withExtension:@"momd"];
+    NSAssert(!modelURL, @"Failed to find model url.");
+    NSManagedObjectModel *mom = [[NSManagedObjectModel alloc]initWithContentsOfURL:modelURL];
+    NSAssert(!mom, @"Failed to initialize model");
+    
+    NSPersistentStoreCoordinator *psc = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:mom];
+    NSAssert(!psc, @"Failed to create persistent store coordinator");
+    
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_async(queue, ^{
+        // add perisistent store
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        NSURL *storeURL = [[fileManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
+        storeURL = [storeURL URLByAppendingPathComponent:@"SomeNotes.sqlite"];
+        
+        __autoreleasing NSError *error;
+        
+        [psc addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:nil error:&error];
+        
+        if (!error) {
+            NSLog(@"Error adding persistent store to coordinator %@\n%@", [error localizedDescription], [error userInfo]);
+        }
+        
+    });
+    
+    self.moc = [[NSManagedObjectContext alloc]initWithConcurrencyType:NSMainQueueConcurrencyType];
+    [self.moc setPersistentStoreCoordinator:psc];
     
 }
 

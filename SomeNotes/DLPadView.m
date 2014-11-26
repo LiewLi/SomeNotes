@@ -12,6 +12,8 @@
 #import "DLNote.h"
 #import "DLNoteWindowController.h"
 #import "DLSingleNoteWindow.h"
+#import "AppDelegate.h"
+#import "Note.h"
 
 @interface DLPadView ()<NSTableViewDataSource, NSTableViewDelegate>
 {
@@ -26,6 +28,7 @@
     DLNote *selectedNote;
     NSMutableDictionary *noteWindows;
     BOOL deactiveMode;
+    NSManagedObjectContext *moc;
 }
 
 @end
@@ -36,6 +39,9 @@
     [super viewDidLoad];
     // Do view setup here
     
+    moc = ((AppDelegate *)[NSApp delegate]).moc;
+    
+    
     noteWindows = [[NSMutableDictionary alloc] init];
     
     activeColor = [NSColor colorWithCalibratedRed:1.0 green:195.0/255 blue:10.0/225 alpha:1.0];
@@ -45,7 +51,7 @@
    // dateFormatter.timeStyle = NSDateFormatterShortStyle;
    // dateFormatter.dateStyle = NSDateFormatterShortStyle;
     
-    notes = [[NSMutableArray alloc]init]; //TODO: Load From FS
+    //notes = [[NSMutableArray alloc]init]; //TODO: Load From FS
     
     active = YES; // active Mode
     
@@ -68,6 +74,25 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(noteNeedRefresh:) name:DLNoteNeedsRefreshNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(mainWindow:) name:NSWindowDidBecomeMainNotification object:nil];
     
+    
+    
+    
+}
+
+
+- (void)fetchNotesFromStore
+{
+    NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
+    NSEntityDescription *entityDesc = [NSEntityDescription entityForName:@"Note" inManagedObjectContext:moc];
+    [fetchRequest setEntity:entityDesc];
+
+    __autoreleasing NSError *error;
+    
+    notes = [[moc executeFetchRequest:fetchRequest error:&error] mutableCopy];
+    
+    if (notes == nil) {
+        //TODO handle nil
+    }
 }
 
 
@@ -107,23 +132,26 @@
     //resort tableview based on modified date
     DLNote *note = notification.object;
     NSUInteger index = [notes indexOfObject:note];
-    
-    DLNoteCellView *cellView = [self.tableView viewAtColumn:0 row:index makeIfNecessary:NO];
-    note.modifiedDate = [NSDate date];
-    NSAttributedString *date = [self dateForNote:note Since:[NSDate date]];
-    cellView.timeLabel.attributedStringValue = date;
-    
-    
-    [notes sortUsingComparator:^NSComparisonResult(DLNote* note1, DLNote* note2) {
-        return [note2.modifiedDate compare:note1.modifiedDate];
-    }];
-    
-    
-    [self.tableView beginUpdates];
-    if(index != 0) {
-        [self.tableView moveRowAtIndex:index toIndex:0];
+    if (index != NSNotFound) {
+        DLNoteCellView *cellView = [self.tableView viewAtColumn:0 row:index makeIfNecessary:NO];
+        note.modifiedDate = [NSDate date];
+        NSAttributedString *date = [self dateForNote:note Since:[NSDate date]];
+        cellView.timeLabel.attributedStringValue = date;
+        
+        
+        [notes sortUsingComparator:^NSComparisonResult(DLNote* note1, DLNote* note2) {
+            return [note2.modifiedDate compare:note1.modifiedDate];
+        }];
+        
+        
+        [self.tableView beginUpdates];
+        if(index != 0) {
+            [self.tableView moveRowAtIndex:index toIndex:0];
+        }
+        [self.tableView endUpdates];
     }
-    [self.tableView endUpdates];
+    
+
 }
 
 - (void)becomeActive:(NSNotification *)notification
@@ -172,10 +200,13 @@
 {
     DLNote *note = notification.object;
     NSUInteger index = [notes indexOfObject:note];
-    if (index == self.tableView.selectedRow) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:DLSingleNoteWindowRefresh object:nil];
+    if (index != NSNotFound) {
+        if (index == self.tableView.selectedRow) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:DLSingleNoteWindowRefresh object:nil];
+        }
+        [self.tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:index] columnIndexes:[NSIndexSet indexSetWithIndex:0]];
     }
-    [self.tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:index] columnIndexes:[NSIndexSet indexSetWithIndex:0]];
+
 }
 
 

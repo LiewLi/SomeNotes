@@ -13,6 +13,8 @@
 		B129C8641A246831006E3B65 /* DLTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = B129C8631A246831006E3B65 /* DLTableView.m */; };
 		B129C8681A249C32006E3B65 /* DLNoteWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = B129C8661A249C32006E3B65 /* DLNoteWindowController.m */; };
 		B129C8691A249C32006E3B65 /* DLNoteWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = B129C8671A249C32006E3B65 /* DLNoteWindowController.xib */; };
+		B129C86C1A259E29006E3B65 /* Note.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = B129C86A1A259E29006E3B65 /* Note.xcdatamodeld */; };
+		B129C86F1A259F78006E3B65 /* Note.m in Sources */ = {isa = PBXBuildFile; fileRef = B129C86E1A259F78006E3B65 /* Note.m */; };
 		B154C1FC1A12601900F98CCE /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = B154C1FB1A12601900F98CCE /* AppDelegate.m */; };
 		B154C1FE1A12601900F98CCE /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = B154C1FD1A12601900F98CCE /* main.m */; };
 		B154C2001A12601900F98CCE /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B154C1FF1A12601900F98CCE /* Images.xcassets */; };
@@ -48,6 +50,9 @@
 		B129C8651A249C32006E3B65 /* DLNoteWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DLNoteWindowController.h; sourceTree = "<group>"; };
 		B129C8661A249C32006E3B65 /* DLNoteWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DLNoteWindowController.m; sourceTree = "<group>"; };
 		B129C8671A249C32006E3B65 /* DLNoteWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DLNoteWindowController.xib; sourceTree = "<group>"; };
+		B129C86B1A259E29006E3B65 /* Note.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Note.xcdatamodel; sourceTree = "<group>"; };
+		B129C86D1A259F78006E3B65 /* Note.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Note.h; sourceTree = "<group>"; };
+		B129C86E1A259F78006E3B65 /* Note.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Note.m; sourceTree = "<group>"; };
 		B154C1F51A12601900F98CCE /* SomeNotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SomeNotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B154C1F91A12601900F98CCE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B154C1FA1A12601900F98CCE /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -122,6 +127,9 @@
 				B129C8651A249C32006E3B65 /* DLNoteWindowController.h */,
 				B129C8661A249C32006E3B65 /* DLNoteWindowController.m */,
 				B129C8671A249C32006E3B65 /* DLNoteWindowController.xib */,
+				B129C86A1A259E29006E3B65 /* Note.xcdatamodeld */,
+				B129C86D1A259F78006E3B65 /* Note.h */,
+				B129C86E1A259F78006E3B65 /* Note.m */,
 				B12538D21A1360D2005FC00F /* DLNote.h */,
 				B12538D31A1360D2005FC00F /* DLNote.m */,
 				B129C8621A246831006E3B65 /* DLTableView.h */,
@@ -267,9 +275,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B129C86F1A259F78006E3B65 /* Note.m in Sources */,
 				B154C21B1A12612200F98CCE /* DLPadView.m in Sources */,
 				B12538D41A1360D2005FC00F /* DLNote.m in Sources */,
 				B154C1FE1A12601900F98CCE /* main.m in Sources */,
+				B129C86C1A259E29006E3B65 /* Note.xcdatamodeld in Sources */,
 				B154C1FC1A12601900F98CCE /* AppDelegate.m in Sources */,
 				B154C2201A12614000F98CCE /* DLSingleNoteWindow.m in Sources */,
 				B154C2271A13167100F98CCE /* DLNoteCellView.m in Sources */,
@@ -476,6 +486,19 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		B129C86A1A259E29006E3B65 /* Note.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				B129C86B1A259E29006E3B65 /* Note.xcdatamodel */,
+			);
+			currentVersion = B129C86B1A259E29006E3B65 /* Note.xcdatamodel */;
+			path = Note.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = B154C1ED1A12601900F98CCE /* Project object */;
 }
