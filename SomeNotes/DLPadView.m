@@ -14,6 +14,8 @@
 #import "AppDelegate.h"
 #import "Note.h"
 
+
+
 @interface DLPadView ()<NSTableViewDataSource, NSTableViewDelegate>
 {
     NSDictionary *titleAttr;
@@ -24,19 +26,28 @@
     NSColor *activeColor;
     NSColor *inactiveColor;
     NSMutableArray *notesCopy;
-    Note *selectedNote;
+  
     NSMutableDictionary *noteWindows;
     BOOL deactiveMode;
     NSManagedObjectContext *moc;
 }
 
+@property(nonatomic, strong) Note *selectedNote;
 @end
 
 @implementation DLPadView
 
 
+- (void)setSelectedNote:(Note *)selectedNote
+{
+    if (selectedNote != _selectedNote) {
+        _selectedNote = selectedNote;
+    }
+}
+
 - (void)initializeCoreDataStack
 {
+    
     NSURL *modelURL = [[NSBundle mainBundle] URLForResource:@"Note" withExtension:@"momd"];
     NSAssert(modelURL, @"Failed to find model url.");
     NSManagedObjectModel *mom = [[NSManagedObjectModel alloc]initWithContentsOfURL:modelURL];
@@ -111,7 +122,6 @@
     self.scrollView.contentInsets = NSEdgeInsetsMake(0, 20, 0, 20);
     [self.tableView setDoubleAction:@selector(openNote:)];
     
-    
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(noteTitleChange:)name:DLNoteChangeTitleNotification object:nil];
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(addNote:) name:DLAddNewNoteNotification object:nil];
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(becomeInactive:) name:DLEnteringEditingModeNotification object:nil];
@@ -121,6 +131,7 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(mainWindow:) name:NSWindowDidBecomeMainNotification object:nil];
     
     
+        NSLog(@"%s", __PRETTY_FUNCTION__);
     if (notes.count > 0) {
         [self.tableView reloadData];
         [self.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
@@ -259,8 +270,8 @@
            // notesCopy = nil;
         notes = [self fetchNotesWithPredicate:nil];
             [self.tableView reloadData];
-            if (selectedNote) {
-                NSUInteger row = [notes indexOfObject:selectedNote];
+            if (self.selectedNote) {
+                NSUInteger row = [notes indexOfObject:self.selectedNote];
                 [self.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:row] byExtendingSelection:NO];
             }
       //  }
@@ -330,7 +341,7 @@
                 // [notes removeObjectAtIndex:row];
                 [self deleteNoteFromStore:notes[0]];
                 [[NSNotificationCenter defaultCenter] postNotificationName:DLChangeCurrentNoteNotification object:nil];
-                 selectedNote = nil;
+                 self.selectedNote = nil;
             }
 
             
@@ -347,7 +358,7 @@
    // note.modifiedDate = [NSDate date];
     //[notes insertObject:note atIndex:0];
    Note *note =  [self addNewNoteToStore];
-    selectedNote = note;
+    self.selectedNote = note;
     [self.tableView insertRowsAtIndexes:[NSIndexSet indexSetWithIndex:0] withAnimation:NSTableViewAnimationSlideDown];
     [self.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
     
@@ -439,7 +450,7 @@
                 [self.tableView removeRowsAtIndexes:[NSIndexSet indexSetWithIndex:row] withAnimation:NSTableViewAnimationSlideUp];
                 [self deleteNoteFromStore:notes[row]];
                 [[NSNotificationCenter defaultCenter] postNotificationName:DLChangeCurrentNoteNotification object:nil];
-                selectedNote = nil;
+                self.selectedNote = nil;
             }
             
         }
@@ -484,7 +495,7 @@
     cellView.titleLabel.attributedStringValue = title;
     cellView.timeLabel.attributedStringValue = time;
     
-    if ([note isEqualTo:selectedNote]) {
+    if ([note isEqualTo:self.selectedNote]) {
         cellView.backgroundColor = deactiveMode? [NSColor gridColor] :( active ? activeColor : inactiveColor);
     }
     else {
@@ -510,9 +521,9 @@
     }
   
     if (self.tableView.selectedRow >= 0) {
-        selectedNote = notes[self.tableView.selectedRow];
+        self.selectedNote = notes[self.tableView.selectedRow];
         [self refreshTableView];
-        [[NSNotificationCenter defaultCenter] postNotificationName:DLChangeCurrentNoteNotification object:selectedNote];
+        [[NSNotificationCenter defaultCenter] postNotificationName:DLChangeCurrentNoteNotification object:self.selectedNote];
     }
     
 }
@@ -533,7 +544,7 @@
     if (count) {
         for (int i = 0; i < notes.count; ++i) {
             DLNoteCellView *cellView = [self.tableView viewAtColumn:0 row:i makeIfNecessary:NO];
-            if (![notes[i] isEqualTo:selectedNote]) {
+            if (![notes[i] isEqualTo:self.selectedNote]) {
                  cellView.backgroundColor = [NSColor whiteColor];
                 if (self.tableView.selectedRow == i + 1) {
                     cellView.isSelected = YES;

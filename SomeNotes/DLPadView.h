@@ -12,6 +12,9 @@ static NSString *DLChangeCurrentNoteNotification = @"DLChangeCurrentNoteNotifica
 static NSString *DLSingleNoteWindowRefresh = @"DLSingleNoteWindowRefresh ";
 static NSString *DLNoteRemovedFromContext = @"DLNoteRemovedFromContext";
 
+//static NSString *DLSelectedNoteKey = @"DLSelectedNoteKey";
+//static NSString *DLSelectedNoteContent = @"DLSelectedNoteContent";
+
 @interface DLPadView : NSViewController
 @property (nonatomic, weak)IBOutlet NSTableView *tableView;
 @property (nonatomic, weak)IBOutlet NSScrollView *scrollView;

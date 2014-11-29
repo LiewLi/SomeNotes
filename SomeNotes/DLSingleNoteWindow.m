@@ -23,6 +23,15 @@
 @implementation DLSingleNoteWindow
 
 
+- (void)awakeFromNib
+{
+    
+    [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(changeCurrentNote:) name:DLChangeCurrentNoteNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(enterEditingMode:) name:DLEnteringEditingModeNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refresh:) name:DLSingleNoteWindowRefresh object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(noteRemovedFromContext:) name:DLNoteRemovedFromContext object:nil];
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do view setup here.
@@ -49,13 +58,8 @@
     [textView.enclosingScrollView setBackgroundColor:[NSColor windowBackgroundColor]];
     [textView.enclosingScrollView setDrawsBackground:YES];
     
-    self.backgroundView.backgroundColor = [NSColor windowBackgroundColor];
     
-    [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(changeCurrentNote:) name:DLChangeCurrentNoteNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(enterEditingMode:) name:DLEnteringEditingModeNotification object:nil];
-     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refresh:) name:DLSingleNoteWindowRefresh object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(noteRemovedFromContext:) name:DLNoteRemovedFromContext object:nil];
-
+    self.backgroundView.backgroundColor = [NSColor windowBackgroundColor];
 }
 
 - (void)noteRemovedFromContext:(NSNotification *)notification
@@ -67,7 +71,6 @@
 
 - (void)changeCurrentNote:(NSNotification *)notification
 {
-    NSLog(@"%s", __PRETTY_FUNCTION__);
     if (currentNote) {
         currentNote.content = textView.attributedString;
     }
@@ -76,6 +79,8 @@
     if (currentNote.content) {
         [textView.textStorage appendAttributedString:currentNote.content];
     }
+
+  //  [textView invalidateRestorableState];
 }
 
 - (void)dealloc

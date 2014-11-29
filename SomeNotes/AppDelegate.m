@@ -31,9 +31,9 @@ static NSString * DLAtttributedStringTransformer = @"DLAtttributedStringTransfor
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     // Insert code here to initialize your application
-    
-    _padView = [[DLPadView alloc]init];
     _singleNoteView = [[DLSingleNoteWindow alloc]init];
+    _padView = [[DLPadView alloc]init];
+    
     
     self.splitView.vertical = YES;
     
@@ -45,7 +45,6 @@ static NSString * DLAtttributedStringTransformer = @"DLAtttributedStringTransfor
     winFrame.size.height = 500;
     [self.window setFrame:winFrame display:NO];
     [self.window setMinSize:NSMakeSize(400, 400)];
-    
 
     
     
@@ -57,8 +56,23 @@ static NSString * DLAtttributedStringTransformer = @"DLAtttributedStringTransfor
     
     [self.splitView adjustSubviews];
     
+//    [self.window setRestorable:YES];
+//    self.window.identifier = @"SomeNotesWindow";
+//    [self.window setRestorationClass:[self class]];
+    
     
 }
+
+
+
+#pragma mark - Resume NSWindowRestoration
+//+ (void)restoreWindowWithIdentifier:(NSString *)identifier state:(NSCoder *)state completionHandler:(void (^)(NSWindow *, NSError *))completionHandler
+//{
+//    NSLog(@"%s", __PRETTY_FUNCTION__);
+//    AppDelegate *appDelegate = (AppDelegate *)[NSApp delegate];
+//    completionHandler(appDelegate.window, NULL);
+//}
+
 
 
 
